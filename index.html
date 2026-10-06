@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Time in Time - Özel Anılar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Great+Vibes&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #030303;
+      font-family: 'Poppins', sans-serif;
+      color: #fff;
+    }
+
+    /* Arka Plan Matrix Kanvası */
+    #matrixCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      opacity: 0.85;
+    }
+
+    /* Uçuşan Nesneler Kanvası (Kalp & Kelebek) */
+    #particleCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* Ana Konteyner */
+    .container {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      text-align: center;
+    }
+
+    /* Parlama Efektli Kart */
+    .card {
+      background: rgba(10, 10, 10, 0.75);
+      border: 2px solid var(--primary-color, #ff007f);
+      border-radius: 24px;
+      padding: 35px 25px;
+      max-width: 480px;
+      width: 90%;
+      box-shadow: 
+        0 0 20px var(--glow-color, rgba(255, 0, 128, 0.4)),
+        inset 0 0 15px var(--glow-color, rgba(255, 0, 128, 0.3)),
+        0 0 50px var(--glow-color, rgba(255, 0, 128, 0.2));
+      backdrop-filter: blur(8px);
+      animation: pulseGlow 3s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      0% {
+        box-shadow: 0 0 20px var(--glow-color, rgba(255, 0, 128, 0.4)), inset 0 0 15px var(--glow-color, rgba(255, 0, 128, 0.3));
+        border-color: var(--primary-color, #ff007f);
+      }
+      100% {
+        box-shadow: 0 0 35px var(--glow-color, rgba(255, 0, 128, 0.8)), inset 0 0 25px var(--glow-color, rgba(255, 0, 128, 0.5));
+        border-color: var(--light-color, #ff66cc);
+      }
+    }
+
+    /* İsimler */
+    .names {
+      font-family: 'Great Vibes', cursive;
+      font-size: 3rem;
+      color: var(--light-color, #ffb3da);
+      text-shadow: 
+        0 0 10px var(--primary-color, #ff007f),
+        0 0 20px var(--primary-color, #ff007f),
+        0 0 30px var(--primary-color, #ff007f);
+      margin-bottom: 5px;
+      line-height: 1.2;
+    }
+
+    /* Alt Başlık */
+    .subtitle {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 4px;
+      color: var(--light-color, #ff66b2);
+      text-transform: uppercase;
+      margin-bottom: 25px;
+      text-shadow: 0 0 8px var(--primary-color, rgba(255, 0, 128, 0.8));
+    }
+
+    /* Sayaç Izgarası */
+    .timer-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .timer-box {
+      background: var(--bg-box, rgba(255, 0, 128, 0.1));
+      border: 1px solid var(--border-box, rgba(255, 102, 178, 0.5));
+      border-radius: 12px;
+      padding: 12px 5px;
+      box-shadow: 0 0 10px var(--glow-color, rgba(255, 0, 128, 0.2));
+    }
+
+    .timer-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 
+        0 0 5px var(--primary-color, #ff007f),
+        0 0 10px var(--primary-color, #ff007f);
+    }
+
+    .timer-label {
+      font-size: 0.7rem;
+      color: var(--light-color, #ff99cc);
+      text-transform: uppercase;
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    /* Saniye için Ekstra Parlama */
+    .seconds-box {
+      border-color: var(--primary-color, #ff007f);
+      background: var(--bg-box-active, rgba(255, 0, 128, 0.2));
+    }
+
+    /* Özel Söz */
+    .quote {
+      font-style: italic;
+      font-size: 0.95rem;
+      color: #ffffff;
+      margin-top: 20px;
+      line-height: 1.6;
+      text-shadow: 0 0 5px var(--primary-color, rgba(255, 0, 128, 0.5));
+      font-weight: 300;
+    }
+
+    /* Kalp Simgesi */
+    .heart-icon {
+      color: var(--primary-color, #ff007f);
+      font-size: 1.5rem;
+      margin: 15px 0 5px 0;
+      animation: heartBeat 1.2s infinite;
+      display: inline-block;
+      filter: drop-shadow(0 0 8px var(--primary-color, #ff007f));
+    }
+
+    @keyframes heartBeat {
+      0% { transform: scale(1); }
+      14% { transform: scale(1.25); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.25); }
+      70% { transform: scale(1); }
+    }
+
+    /* Mobil Uyumlu */
+    @media (max-width: 480px) {
+      .names { font-size: 2.4rem; }
+      .timer-value { font-size: 1.2rem; }
+      .timer-label { font-size: 0.6rem; }
+      .card { padding: 25px 15px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Canvases -->
+  <canvas id="matrixCanvas"></canvas>
+  <canvas id="particleCanvas"></canvas>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="card">
+      <div id="displayNames" class="names">Genco & Tolga</div>
+      <div class="subtitle">TIME IN TIME</div>
+
+      <div class="heart-icon">♥️</div>
+
+      <!-- Live Counter -->
+      <div class="timer-grid">
+        <div class="timer-box">
+          <div id="days" class="timer-value">00</div>
+          <div class="timer-label">Gün</div>
+        </div>
+        <div class="timer-box">
+          <div id="hours" class="timer-value">00</div>
+          <div class="timer-label">Saat</div>
+        </div>
+        <div class="timer-box">
+          <div id="minutes" class="timer-value">00</div>
+          <div class="timer-label">Dakika</div>
+        </div>
+        <div class="timer-box seconds-box">
+          <div id="seconds" class="timer-value">00</div>
+          <div class="timer-label">Saniye</div>
+        </div>
+      </div>
+
+      <div id="displayQuote" class="quote">
+        "Zamanın içinde, seninle geçen her saniye sonsuz bir aşka dönüşüyor..."
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    //  👇 MÜŞTERİ BİLGİLERİ DÜZENLEME ALANI (Sadece Burayı Değiştirin) 👇
+    // =========================================================================
+    const ISIMLER = "Genco & Tolga";               // Ekranda görünecek isimler
+    const TARIH_STR = "2026-10-06T00:00:00";       // Format: YYYY-AA-GGTSAAT
+    const OZEL_SOZ = "Zamanın içinde, seninle geçen her saniye sonsuz bir aşka dönüşüyor..."; // Özel Mesaj
+
+    // RENK TEMA SEÇENEKLERİ: "pembe" | "yesil" | "sari" | "beyaz"
+    const RENK_TEMA = "yesil"; 
+    // =========================================================================
+
+    // RENK PALETLERİ
+    const RENKLER = {
+      pembe: {
+        primary: "#ff007f",
+        light: "#ff99dd",
+        glow: "rgba(255, 0, 127, 0.5)",
+        bgBox: "rgba(255, 0, 127, 0.1)",
+        borderBox: "rgba(255, 102, 204, 0.5)"
+      },
+      yesil: {
+        primary: "#00ff66",
+        light: "#a6ffcc",
+        glow: "rgba(0, 255, 102, 0.5)",
+        bgBox: "rgba(0, 255, 102, 0.1)",
+        borderBox: "rgba(102, 255, 178, 0.5)"
+      },
+      sari: {
+        primary: "#ffcc00",
+        light: "#fffaab",
+        glow: "rgba(255, 204, 0, 0.5)",
+        bgBox: "rgba(255, 204, 0, 0.1)",
+        borderBox: "rgba(255, 224, 102, 0.5)"
+      },
+      beyaz: {
+        primary: "#ffffff",
+        light: "#dcdcdc",
+        glow: "rgba(255, 255, 255, 0.5)",
+        bgBox: "rgba(255, 255, 255, 0.1)",
+        borderBox: "rgba(220, 220, 220, 0.5)"
+      }
+    };
+
+    const aktifTema = RENKLER[RENK_TEMA] || RENKLER.pembe;
+
+    // CSS Değişkenlerini Uygula
+    document.documentElement.style.setProperty('--primary-color', aktifTema.primary);
+    document.documentElement.style.setProperty('--light-color', aktifTema.light);
+    document.documentElement.style.setProperty('--glow-color', aktifTema.glow);
+    document.documentElement.style.setProperty('--bg-box', aktifTema.bgBox);
+    document.documentElement.style.setProperty('--border-box', aktifTema.borderBox);
+
+    // Bilgileri Ekrana Yazdır
+    document.getElementById("displayNames").innerText = ISIMLER;
+    document.getElementById("displayQuote").innerText = "${OZEL_SOZ}";
+
+    // 1. DİJİTAL MATRİX YAĞMURU EFEKTİ
+    const mCanvas = document.getElementById('matrixCanvas');
+    const mCtx = mCanvas.getContext('2d');
+
+    function resizeMatrix() {
+      mCanvas.width = window.innerWidth;
+      mCanvas.height = window.innerHeight;
+    }
+    resizeMatrix();
+
+    const chars = '01234567890123456789TIMEINTIME';
+    const fontSize = 14;
+    let columns = Math.floor(mCanvas.width / fontSize);
+    let drops = Array(columns).fill(1);
+
+    function drawMatrix() {
+      mCtx.fillStyle = 'rgba(3, 3, 3, 0.08)';
+      mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
+
+      mCtx.font = fontSize + 'px Orbitron, monospace';
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars.charAt(Math.floor(Math.random() * chars.length));
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+
+        if (Math.random() > 0.92) {
+          mCtx.fillStyle = '#ffffff';
+          mCtx.shadowBlur = 12;
+          mCtx.shadowColor = aktifTema.light;
+        } else {
+          mCtx.fillStyle = aktifTema.primary;
+          mCtx.shadowBlur = 4;
+          mCtx.shadowColor = aktifTema.primary;
+        }
+
+        mCtx.fillText(text, x, y);
+
+        if (y > mCanvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    }
+
+    // 2. UÇUŞAN KALPLER VE KELEBEKLER EFEKTİ
+    const pCanvas = document.getElementById('particleCanvas');
+    const pCtx = pCanvas.getContext('2d');
+
+    function resizeParticles() {
+      pCanvas.width = window.innerWidth;
+      pCanvas.height = window.innerHeight;
+    }
+    resizeParticles();
+
+    const particles = [];
+    const particleCount = 25;
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * pCanvas.width;
+        this.y = pCanvas.height + 20;
+        this.size = Math.random() * 14 + 10;
+        this.speedY = Math.random() * 1.5 + 0.5;
+        this.speedX = Math.sin(Math.random() * Math.PI) * 1;
+        this.type = Math.random() > 0.4 ? 'heart' : 'butterfly';
+        this.opacity = Math.random() * 0.7 + 0.3;
+        this.angle = Math.random() * 360;
+        this.swingSpeed = Math.random() * 0.03 + 0.01;
+      }
+
+      update() {
+        this.y -= this.speedY;
+        this.angle += this.swingSpeed;
+        this.x += Math.sin(this.angle) * 1.2;
+
+        if (this.y < -30) {
+          this.reset();
+        }
+      }
+
+      draw() {
+        pCtx.save();
+        pCtx.translate(this.x, this.y);
+        pCtx.globalAlpha = this.opacity;
+        pCtx.fillStyle = aktifTema.light;
+        pCtx.shadowBlur = 10;
+        pCtx.shadowColor = aktifTema.primary;
+
+        if (this.type === 'heart') {
+          pCtx.beginPath();
+          const topCurveHeight = this.size * 0.3;
+          pCtx.moveTo(0, topCurveHeight);
+          pCtx.bezierCurveTo(0, 0, -this.size / 2, 0, -this.size / 2, topCurveHeight);
+          pCtx.bezierCurveTo(-this.size / 2, (this.size + topCurveHeight) / 2, 0, this.size, 0, this.size);
+          pCtx.bezierCurveTo(0, this.size, this.size / 2, (this.size + topCurveHeight) / 2, this.size / 2, topCurveHeight);
+          pCtx.bezierCurveTo(this.size / 2, 0, 0, 0, 0, topCurveHeight);
+          pCtx.closePath();
+          pCtx.fill();
+        } else {
+          const wingFlap = Math.sin(this.angle * 5) * 0.4 + 0.6;
+          pCtx.scale(wingFlap, 1);
+          
+          pCtx.beginPath();
+          pCtx.ellipse(-this.size/2, 0, this.size/2, this.size/3, Math.PI/4, 0, 2 * Math.PI);
+          pCtx.ellipse(this.size/2, 0, this.size/2, this.size/3, -Math.PI/4, 0, 2 * Math.PI);
+          pCtx.ellipse(-this.size/3, this.size/3, this.size/3, this.size/4, Math.PI/3, 0, 2 * Math.PI);
+          pCtx.ellipse(this.size/3, this.size/3, this.size/3, this.size/4, -Math.PI/3, 0, 2 * Math.PI);
+          pCtx.fill();
+        }
+
+        pCtx.restore();
+      }
+    }
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+
+    function animate() {
+      drawMatrix();
+      
+      pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      resizeMatrix();
+      resizeParticles();
+      columns = Math.floor(mCanvas.width / fontSize);
+      drops = Array(columns).fill(1);
+    });
+
+    // 3. CANLI SAYAÇ (İleri Doğru Sayan)
+    const startDate = new Date(TARIH_STR).getTime();
+
+    function updateTimer() {
+      const now = new Date().getTime();
+      const diff = now - startDate;
+
+      if (diff < 0) {
+        document.getElementById("days").innerText = "00";
+        document.getElementById("hours").innerText = "00";
+        document.getElementById("minutes").innerText = "00";
+        document.getElementById("seconds").innerText = "00";
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      document.getElementById("days").innerText = days < 10 ? "0" + days : days;
+      document.getElementById("hours").innerText = hours < 10 ? "0" + hours : hours;
+      document.getElementById("minutes").innerText = minutes < 10 ? "0" + minutes : minutes;
+      document.getElementById("seconds").innerText = seconds < 10 ? "0" + seconds : seconds;
+    }
+
+    setInterval(updateTimer, 1000);
+    updateTimer();
+  </script>
+</body>
+</html>
